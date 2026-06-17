@@ -1,0 +1,22 @@
+/bin/
+.classpath
+.project
+*.class
+/.idea/
+*.eml
+# Build helpers / downloaded runtime
+sources.txt
+classes.txt
+/jre/
+jre.zip
+/vlc/
+vlc.zip
+/dist/
+/build_stage/
+gui_out.log
+gui_*.png
+g_*.png
+# NOTE: TwitchRecover.jar IS committed on purpose so users only need start.bat.
+
+# Local tooling
+/.claude/
