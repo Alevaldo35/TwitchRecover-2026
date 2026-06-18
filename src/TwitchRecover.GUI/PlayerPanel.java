@@ -21,26 +21,26 @@ import java.awt.event.ActionListener;
 import java.util.List;
 
 /**
- * Internal video player (embedded libVLC) with a sleek, dark, Netflix-like
- * control bar: transport, seek, volume, fullscreen and a system-player fallback.
+ * Internal video player (embedded libVLC) with a clean, minimal, icon-based
+ * control bar (play, ±10 s, volume, fullscreen) that auto-hides in fullscreen.
  */
 class PlayerPanel extends JPanel {
-    private static final Color BAR = new Color(0x12, 0x12, 0x16);
-    private static final Color BTN = new Color(0x2A, 0x2A, 0x32);
+    private static final Color BAR = new Color(0x0E, 0x0E, 0x12);
 
     private final Runnable onBack;
     private final Runnable onFullscreen;
     private EmbeddedMediaPlayerComponent media;
     private boolean available;
 
-    private final JLabel titleLabel = new JLabel();
+    private final JLabel titleLabel = new JLabel("", SwingConstants.CENTER);
     private final JComboBox<String> qualityCombo = new JComboBox<String>();
-    private final JButton playPause;
-    private final JButton muteBtn;
-    private final JSlider seek;
-    private final JSlider volume;
+    private final IconButton playPause = new IconButton(IconButton.Kind.PAUSE, 24);
+    private final IconButton muteBtn = new IconButton(IconButton.Kind.VOLUME, 22);
+    private final JSlider seek = new JSlider(0, 1000, 0);
+    private final JSlider volume = new JSlider(0, 100, 90);
     private final JLabel timeLabel = new JLabel("0:00 / 0:00");
     private final Timer timer;
+
     private JPanel topBar;
     private JPanel bottomBar;
     private Timer hideTimer;
@@ -48,6 +48,7 @@ class PlayerPanel extends JPanel {
     private Cursor blankCursor;
 
     private List<String> urls;
+    private String fullTitle = "";
     private String currentUrl;
     private boolean seeking = false;
     private boolean updatingCombo = false;
@@ -59,12 +60,15 @@ class PlayerPanel extends JPanel {
         setLayout(new BorderLayout());
 
         // ---- Top bar ----
-        JButton back = pill(I18n.t("player.back"), false);
+        IconButton back = new IconButton(IconButton.Kind.BACK, 22);
         back.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) { stop(); if (onBack != null) onBack.run(); }
         });
-        titleLabel.setFont(Ui.font(14, Font.BOLD));
-        titleLabel.setForeground(Color.WHITE);
+        IconButton ext = new IconButton(IconButton.Kind.EXTERNAL, 22);
+        ext.setToolTipText(I18n.t("player.external"));
+        ext.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) { if (currentUrl != null) Player.play(currentUrl); }
+        });
         qualityCombo.setFont(Ui.font(12, Font.PLAIN));
         qualityCombo.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -73,24 +77,16 @@ class PlayerPanel extends JPanel {
                 if (urls != null && i >= 0 && i < urls.size()) play(urls.get(i));
             }
         });
-        JButton ext = pill(I18n.t("player.external"), false);
-        ext.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) { if (currentUrl != null) Player.play(currentUrl); }
-        });
 
         JPanel top = new JPanel(new BorderLayout());
         topBar = top;
         top.setBackground(BAR);
-        top.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
-        JPanel topLeft = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
-        topLeft.setOpaque(false);
-        topLeft.add(back);
-        topLeft.add(titleLabel);
-        top.add(topLeft, BorderLayout.WEST);
+        top.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
+        top.add(back, BorderLayout.WEST);
         JPanel topRight = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         topRight.setOpaque(false);
-        topRight.add(ext);
         topRight.add(qualityCombo);
+        topRight.add(ext);
         top.add(topRight, BorderLayout.EAST);
         add(top, BorderLayout.NORTH);
 
@@ -112,10 +108,9 @@ class PlayerPanel extends JPanel {
         }
         add(center, BorderLayout.CENTER);
 
-        // ---- Bottom: seek + controls ----
-        seek = new JSlider(0, 1000, 0);
+        // ---- Seek line (slider + total time) ----
         seek.setOpaque(false);
-        seek.setForeground(Ui.ACCENT);
+        seek.setForeground(new Color(0xE0, 0x21, 0x21));
         seek.addChangeListener(e -> {
             if (seek.getValueIsAdjusting() && available && media != null) {
                 seeking = true;
@@ -124,70 +119,68 @@ class PlayerPanel extends JPanel {
                 seeking = false;
             }
         });
+        timeLabel.setForeground(Color.WHITE);
+        timeLabel.setFont(Ui.font(12, Font.PLAIN));
+        JPanel seekLine = new JPanel(new BorderLayout(12, 0));
+        seekLine.setOpaque(false);
+        seekLine.add(seek, BorderLayout.CENTER);
+        seekLine.add(timeLabel, BorderLayout.EAST);
 
-        JButton back10 = pill("− 10 s", false);
-        back10.addActionListener(skip(-10000));
-        JButton fwd10 = pill("+ 10 s", false);
-        fwd10.addActionListener(skip(10000));
-        playPause = pill(I18n.t("btn.pause"), true);
+        // ---- Controls ----
         playPause.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) { togglePlay(); }
         });
-        JButton stopBtn = pill(I18n.t("btn.stop"), false);
-        stopBtn.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) { if (available && media != null) media.mediaPlayer().controls().stop(); }
-        });
-
-        JPanel transport = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
-        transport.setOpaque(false);
-        transport.add(back10);
-        transport.add(playPause);
-        transport.add(fwd10);
-        transport.add(stopBtn);
-
-        timeLabel.setForeground(Color.WHITE);
-        timeLabel.setFont(Ui.font(12, Font.PLAIN));
-        muteBtn = pill(I18n.t("btn.mute"), false);
+        IconButton back10 = new IconButton(IconButton.Kind.REPLAY10, 24);
+        back10.addActionListener(skip(-10000));
+        IconButton fwd10 = new IconButton(IconButton.Kind.FORWARD10, 24);
+        fwd10.addActionListener(skip(10000));
         muteBtn.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if (available && media != null) {
                     media.mediaPlayer().audio().mute();
-                    muteBtn.setText(I18n.t(media.mediaPlayer().audio().isMute() ? "btn.unmute" : "btn.mute"));
+                    boolean m = media.mediaPlayer().audio().isMute();
+                    muteBtn.setKind(m ? IconButton.Kind.MUTE : IconButton.Kind.VOLUME);
                 }
             }
         });
-        volume = new JSlider(0, 100, 90);
         volume.setOpaque(false);
-        volume.setPreferredSize(new Dimension(100, 22));
+        volume.setPreferredSize(new Dimension(90, 22));
         volume.addChangeListener(e -> {
             if (available && media != null) media.mediaPlayer().audio().setVolume(volume.getValue());
         });
-        JButton fs = pill(I18n.t("btn.fullscreen"), false);
+        IconButton fs = new IconButton(IconButton.Kind.FULLSCREEN, 22);
+        fs.setToolTipText(I18n.t("btn.fullscreen"));
         fs.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) { if (onFullscreen != null) onFullscreen.run(); }
         });
 
-        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        left.setOpaque(false);
-        left.add(timeLabel);
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        right.setOpaque(false);
-        right.add(muteBtn);
-        right.add(volume);
-        right.add(fs);
+        JPanel leftGroup = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        leftGroup.setOpaque(false);
+        leftGroup.add(playPause);
+        leftGroup.add(back10);
+        leftGroup.add(fwd10);
+        leftGroup.add(muteBtn);
+        leftGroup.add(volume);
 
-        JPanel row = new JPanel(new BorderLayout());
-        row.setOpaque(false);
-        row.add(left, BorderLayout.WEST);
-        row.add(transport, BorderLayout.CENTER);
-        row.add(right, BorderLayout.EAST);
+        titleLabel.setForeground(Color.WHITE);
+        titleLabel.setFont(Ui.font(13, Font.BOLD));
 
-        JPanel bottom = new JPanel(new BorderLayout(0, 8));
+        JPanel rightGroup = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
+        rightGroup.setOpaque(false);
+        rightGroup.add(fs);
+
+        JPanel controls = new JPanel(new BorderLayout(12, 0));
+        controls.setOpaque(false);
+        controls.add(leftGroup, BorderLayout.WEST);
+        controls.add(titleLabel, BorderLayout.CENTER);
+        controls.add(rightGroup, BorderLayout.EAST);
+
+        JPanel bottom = new JPanel(new BorderLayout(0, 4));
         bottomBar = bottom;
         bottom.setBackground(BAR);
-        bottom.setBorder(BorderFactory.createEmptyBorder(8, 16, 12, 16));
-        bottom.add(seek, BorderLayout.NORTH);
-        bottom.add(row, BorderLayout.CENTER);
+        bottom.setBorder(BorderFactory.createEmptyBorder(6, 14, 8, 14));
+        bottom.add(seekLine, BorderLayout.NORTH);
+        bottom.add(controls, BorderLayout.CENTER);
         add(bottom, BorderLayout.SOUTH);
 
         timer = new Timer(500, new ActionListener() {
@@ -211,13 +204,12 @@ class PlayerPanel extends JPanel {
         addMouseListener(wake);
         if (available && media != null) {
             try {
-                java.awt.Component vs = media.videoSurfaceComponent();
+                Component vs = media.videoSurfaceComponent();
                 if (vs != null) { vs.addMouseMotionListener(wake); vs.addMouseListener(wake); }
             } catch (Exception ignored) {}
         }
     }
 
-    /** Enable/disable immersive (fullscreen) auto-hide of the controls. */
     void setImmersive(boolean on) {
         immersive = on;
         setControlsVisible(true);
@@ -238,7 +230,7 @@ class PlayerPanel extends JPanel {
         setCursor(c);
         if (available && media != null) {
             try {
-                java.awt.Component vs = media.videoSurfaceComponent();
+                Component vs = media.videoSurfaceComponent();
                 if (vs != null) vs.setCursor(c);
             } catch (Exception ignored) {}
         }
@@ -254,30 +246,11 @@ class PlayerPanel extends JPanel {
         };
     }
 
-    /** A sleek dark rounded button; primary=accent for the main action. */
-    private JButton pill(String text, boolean primary) {
-        final JButton b = new JButton(text);
-        b.setFont(Ui.font(13, Font.BOLD));
-        b.setForeground(Color.WHITE);
-        b.setFocusPainted(false);
-        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        final Color base = primary ? Ui.ACCENT : BTN;
-        final Color hover = primary ? Ui.ACCENT_HOVER : new Color(0x3A, 0x3A, 0x44);
-        b.setBackground(base);
-        b.putClientProperty(com.formdev.flatlaf.FlatClientProperties.STYLE,
-                "arc: 999; borderWidth: 0; focusWidth: 0; innerFocusWidth: 0");
-        b.setBorder(BorderFactory.createEmptyBorder(primary ? 9 : 7, primary ? 22 : 16, primary ? 9 : 7, primary ? 22 : 16));
-        b.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent e) { b.setBackground(hover); }
-            public void mouseExited(java.awt.event.MouseEvent e) { b.setBackground(base); }
-        });
-        return b;
-    }
-
-    /** Open the player with a list of qualities; starts at startIndex. */
     void open(String title, List<String> labels, List<String> urls, int startIndex) {
         this.urls = urls;
-        titleLabel.setText(title == null ? "" : title);
+        this.fullTitle = title == null ? "" : title;
+        titleLabel.setText(truncate(fullTitle, 64));
+        titleLabel.setToolTipText(fullTitle);
         updatingCombo = true;
         qualityCombo.removeAllItems();
         for (String l : labels) qualityCombo.addItem(l);
@@ -290,7 +263,7 @@ class PlayerPanel extends JPanel {
 
     private void play(String url) {
         currentUrl = url;
-        playPause.setText(I18n.t("btn.pause"));
+        playPause.setKind(IconButton.Kind.PAUSE);
         if (available && media != null) {
             media.mediaPlayer().media().play(url);
             media.mediaPlayer().audio().setVolume(volume.getValue());
@@ -303,7 +276,7 @@ class PlayerPanel extends JPanel {
         if (!available || media == null) return;
         media.mediaPlayer().controls().pause();
         boolean playing = media.mediaPlayer().status().isPlaying();
-        playPause.setText(I18n.t(playing ? "btn.pause" : "btn.play"));
+        playPause.setKind(playing ? IconButton.Kind.PAUSE : IconButton.Kind.PLAY);
     }
 
     private void tick() {
@@ -323,6 +296,11 @@ class PlayerPanel extends JPanel {
         long h = s / 3600, m = (s % 3600) / 60, sec = s % 60;
         if (h > 0) return String.format("%d:%02d:%02d", h, m, sec);
         return String.format("%d:%02d", m, sec);
+    }
+
+    private static String truncate(String s, int max) {
+        if (s == null) return "";
+        return s.length() <= max ? s : s.substring(0, max - 1) + "…";
     }
 
     void stop() {
