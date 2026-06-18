@@ -17,6 +17,9 @@
 
 > ### ➡️ [**Download the latest installer (.exe)**](https://github.com/Alevaldo35/TwitchRecover-2026/releases/latest)
 > Run it and you're done: it installs the app and adds a **Start-menu + desktop shortcut**. Nothing else to install.
+>
+> **First launch — Windows SmartScreen.** Because this free app isn't signed with a (paid) certificate, Windows may show *"Windows protected your PC / unknown publisher"*. It's safe (open-source — read the code here). Click **More info → Run anyway**.
+> *(FR : Windows peut afficher « Windows a protégé votre ordinateur / éditeur inconnu ». C'est normal pour une app gratuite non signée. Cliquez sur **Informations complémentaires → Exécuter quand même**.)*
 
 ---
 
