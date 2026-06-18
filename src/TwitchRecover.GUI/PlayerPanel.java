@@ -45,6 +45,7 @@ class PlayerPanel extends JPanel {
     private JPanel bottomBar;
     private Timer hideTimer;
     private boolean immersive = false;
+    private boolean controlsVisible = true;
     private Cursor blankCursor;
 
     private List<String> urls;
@@ -219,11 +220,13 @@ class PlayerPanel extends JPanel {
 
     private void onActivity() {
         if (!immersive) return;
-        setControlsVisible(true);
+        if (!controlsVisible) setControlsVisible(true);   // only repaint when actually hidden
         hideTimer.restart();
     }
 
     private void setControlsVisible(boolean visible) {
+        if (visible == controlsVisible) return;            // avoid repaint storms (no flicker)
+        controlsVisible = visible;
         if (topBar != null) topBar.setVisible(visible);
         if (bottomBar != null) bottomBar.setVisible(visible);
         Cursor c = visible ? Cursor.getDefaultCursor() : blankCursor;
