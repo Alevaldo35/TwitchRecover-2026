@@ -173,6 +173,10 @@ final class I18n {
         p("player.unavailable", "Lecteur interne indisponible (libVLC introuvable). La vidéo s'ouvre dans VLC.",
                                 "Internal player unavailable (libVLC not found). The video opens in VLC.");
         p("player.openVlc", "Lire dans VLC", "Play in VLC");
+        p("player.external", "Lecteur du système", "System player");
+        p("btn.fullscreen", "Plein écran", "Fullscreen");
+        p("btn.exitFullscreen", "Quitter le plein écran", "Exit fullscreen");
+        p("btn.playSymbol", "▶  Lecture", "▶  Play");
         p("btn.stop", "Arrêter", "Stop");
         p("btn.mute", "Muet", "Mute");
         p("btn.unmute", "Son", "Unmute");
@@ -184,7 +188,11 @@ final class I18n {
         p("about.support", "SOUTENIR LE PROJET", "SUPPORT THE PROJECT");
         p("about.supportBody", "Si ce fork vous est utile, vous pouvez soutenir le développement via la cagnotte :",
                                "If this fork is useful to you, you can support development via the tip jar:");
-        p("about.donate", "Faire un don — paypal.me/AlexValdoBH77", "Donate — paypal.me/AlexValdoBH77");
+        p("about.donate", "PayPal — paypal.me/AlexValdoBH77", "PayPal — paypal.me/AlexValdoBH77");
+        p("about.donateStreamlabs", "Streamlabs — streamlabs.com/alexoptimizer1/tip", "Streamlabs — streamlabs.com/alexoptimizer1/tip");
+        p("about.donateCoffee", "Buy Me a Coffee — buymeacoffee.com/AlexValdoDev", "Buy Me a Coffee — buymeacoffee.com/AlexValdoDev");
+        p("about.donateBnb", "BNB (BSC) — 0x77Ad0E3834a4Eea7184e2e7bB44Bec8393Da4312", "BNB (BSC) — 0x77Ad0E3834a4Eea7184e2e7bB44Bec8393Da4312");
+        p("about.bnbNote", "N'envoyez que des BNB via le réseau BNB Smart Chain (BEP-20).", "Only send BNB via the BNB Smart Chain network (BEP-20).");
 
         p("lang.current", "Français", "English");
         p("lang.tooltip", "Changer de langue / Switch language", "Changer de langue / Switch language");

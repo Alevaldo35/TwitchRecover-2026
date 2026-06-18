@@ -20,3 +20,7 @@ g_*.png
 
 # Local tooling
 /.claude/
+
+# Scratch / unused
+prompte
+logopetit.png

@@ -30,6 +30,8 @@ public class MainWindow extends JFrame {
     private DownloadPanel downloadPanel;
     private GalleryPanel galleryPanel;
     private PlayerPanel playerPanel;
+    private JComponent sideComponent;
+    private boolean fullscreen;
     private String currentCard = "view";
 
     private final java.util.prefs.Preferences prefs =
@@ -58,6 +60,12 @@ public class MainWindow extends JFrame {
         setAppIcon();
         getContentPane().setBackground(Ui.CANVAS);
         buildUi();
+
+        // Esc exits full-screen.
+        getRootPane().registerKeyboardAction(new ActionListener() {
+            public void actionPerformed(ActionEvent e) { exitFullscreen(); }
+        }, KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0),
+           JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
 
     /** Use the project logo as the window/taskbar icon instead of the default Java cup. */
@@ -76,18 +84,44 @@ public class MainWindow extends JFrame {
     }
 
     private void saveBounds() {
-        if ((getExtendedState() & JFrame.MAXIMIZED_BOTH) != 0) return;
+        if (fullscreen || (getExtendedState() & JFrame.MAXIMIZED_BOTH) != 0) return;
         prefs.putInt("w", getWidth());
         prefs.putInt("h", getHeight());
         prefs.putInt("x", getX());
         prefs.putInt("y", getY());
     }
 
+    /** Toggle true full-screen for the player (hides the sidebar, video fills the screen). */
+    void toggleFullscreen() {
+        if (fullscreen) { exitFullscreen(); return; }
+        java.awt.GraphicsDevice gd = getGraphicsConfiguration().getDevice();
+        if (!gd.isFullScreenSupported()) { setExtendedState(JFrame.MAXIMIZED_BOTH); }
+        select("player");
+        if (sideComponent != null) sideComponent.setVisible(false);
+        fullscreen = true;
+        try { gd.setFullScreenWindow(this); } catch (Exception ignored) {}
+        if (playerPanel != null) playerPanel.setImmersive(true);
+        getContentPane().revalidate();
+        getContentPane().repaint();
+    }
+
+    void exitFullscreen() {
+        if (!fullscreen) return;
+        fullscreen = false;
+        if (playerPanel != null) playerPanel.setImmersive(false);
+        java.awt.GraphicsDevice gd = getGraphicsConfiguration().getDevice();
+        try { gd.setFullScreenWindow(null); } catch (Exception ignored) {}
+        if (sideComponent != null) sideComponent.setVisible(true);
+        getContentPane().revalidate();
+        getContentPane().repaint();
+    }
+
     private void buildUi() {
         getContentPane().removeAll();
         navButtons.clear();
         setLayout(new BorderLayout());
-        add(buildSidebar(), BorderLayout.WEST);
+        sideComponent = buildSidebar();
+        add(sideComponent, BorderLayout.WEST);
 
         content.removeAll();
         content.setBackground(Ui.CANVAS);
@@ -97,7 +131,9 @@ public class MainWindow extends JFrame {
             public void run() { select("downloads"); }
         });
         playerPanel = new PlayerPanel(new Runnable() {
-            public void run() { select("view"); }
+            public void run() { exitFullscreen(); select("view"); }
+        }, new Runnable() {
+            public void run() { toggleFullscreen(); }
         });
         Nav nav = new Nav() {
             public void openDownload(String url) {

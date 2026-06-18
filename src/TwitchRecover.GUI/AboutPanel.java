@@ -49,6 +49,14 @@ class AboutPanel extends JPanel {
         col.add(left(body(I18n.t("about.supportBody"))));
         col.add(Box.createVerticalStrut(8));
         col.add(left(linkButton(I18n.t("about.donate"), "https://paypal.me/AlexValdoBH77")));
+        col.add(Box.createVerticalStrut(4));
+        col.add(left(linkButton(I18n.t("about.donateStreamlabs"), "https://streamlabs.com/alexoptimizer1/tip")));
+        col.add(Box.createVerticalStrut(4));
+        col.add(left(linkButton(I18n.t("about.donateCoffee"), "https://buymeacoffee.com/AlexValdoDev")));
+        col.add(Box.createVerticalStrut(4));
+        col.add(left(linkButton(I18n.t("about.donateBnb"), "https://bscscan.com/address/0x77Ad0E3834a4Eea7184e2e7bB44Bec8393Da4312")));
+        col.add(Box.createVerticalStrut(2));
+        col.add(left(body(I18n.t("about.bnbNote"))));
 
         // Original project credit.
         col.add(Box.createVerticalStrut(24));

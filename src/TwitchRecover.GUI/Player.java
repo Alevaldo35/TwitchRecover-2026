@@ -14,26 +14,37 @@ package TwitchRecover.GUI;
 
 import java.awt.Desktop;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
-/** Plays a stream link or a local file in VLC (falling back to the system player). */
+/** Opens a stream link or a local file with the operating system's default player. */
 final class Player {
     private Player() {}
 
     static boolean play(String target) {
         if (target == null || target.isEmpty()) return false;
-        String vlc = findVlc();
-        try {
-            if (vlc != null) { new ProcessBuilder(vlc, target).start(); return true; }
-        } catch (Exception ignored) {}
-        try {
-            new ProcessBuilder("vlc", target).start(); // VLC on PATH (Linux/macOS).
-            return true;
-        } catch (Exception ignored) {}
-        // Last resort for a local file: open with the default application.
+
+        // Local file -> open with the OS default application.
         try {
             File f = new File(target);
-            if (f.exists() && Desktop.isDesktopSupported()) { Desktop.getDesktop().open(f); return true; }
+            if (f.exists() && Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().open(f);
+                return true;
+            }
         } catch (Exception ignored) {}
+
+        // Stream URL -> wrap it in a tiny .m3u8 and open with the OS default player.
+        try {
+            if (Desktop.isDesktopSupported()) {
+                File pl = File.createTempFile("TwitchRecover-play-", ".m3u8");
+                pl.deleteOnExit();
+                String content = "#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1\n" + target + "\n";
+                Files.write(pl.toPath(), content.getBytes(StandardCharsets.UTF_8));
+                Desktop.getDesktop().open(pl);
+                return true;
+            }
+        } catch (Exception ignored) {}
+
         return false;
     }
 
@@ -44,18 +55,5 @@ final class Player {
             if (dir == null) dir = Paths.twitchDir();
             if (Desktop.isDesktopSupported()) Desktop.getDesktop().open(dir);
         } catch (Exception ignored) {}
-    }
-
-    private static String findVlc() {
-        String[] candidates = {
-            "C:\\Program Files\\VideoLAN\\VLC\\vlc.exe",
-            "C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe",
-            "/Applications/VLC.app/Contents/MacOS/VLC",
-            "/usr/bin/vlc"
-        };
-        for (String c : candidates) {
-            if (new File(c).exists()) return c;
-        }
-        return null;
     }
 }
