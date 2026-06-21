@@ -39,6 +39,16 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class Download {
     private static final int MAX_TRIES=5;
+
+    /**
+     * Sets the base directory under which temporary download segments are stored.
+     * Pass null to use the system temp directory (the default). The GUI points this
+     * at Videos\TWITCH\.cache so the app never writes large temp files elsewhere.
+     * @param dir   Base directory for temporary segments, or null for the system temp folder.
+     */
+    public static void setTempBaseDir(File dir){
+        FileHandler.BASE_TEMP_DIR=(dir==null)?null:dir.toPath();
+    }
     /**
      * This method downloads a file from a
      * given URL and downloads it at a given

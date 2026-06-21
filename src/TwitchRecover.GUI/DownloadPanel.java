@@ -161,15 +161,22 @@ class DownloadPanel extends JPanel {
         String format = FORMAT_EXTS[formatCombo.getSelectedIndex()];
         String[] lines = urls.getText().split("\\r?\\n");
         int count = 0;
+        int skipped = 0;
+        java.util.HashSet<String> seen = new java.util.HashSet<String>();
         for (String line : lines) {
             String url = line.trim();
             if (url.isEmpty() || !url.toLowerCase().contains("twitch")) continue;
+            // Skip duplicates within this paste and links already downloading.
+            if (!seen.add(url) || DownloadManager.get().isActive(url)) { skipped++; continue; }
             String title = (Resolver.isClip(url) ? "Clip" : "Video") + " · " + shortId(url);
             DownloadManager.get().add(new DownloadTask(url, destDir, quality, format, title));
             count++;
         }
-        if (count == 0) { status.setText(I18n.t("dl.needLinks")); return; }
-        status.setText(count + I18n.t("dl.addedSuffix"));
+        if (count == 0) {
+            status.setText(skipped > 0 ? I18n.t("dl.allDup") : I18n.t("dl.needLinks"));
+            return;
+        }
+        status.setText(count + I18n.t("dl.addedSuffix") + (skipped > 0 ? I18n.t("dl.skippedSuffix").replace("{n}", String.valueOf(skipped)) : ""));
         urls.setText("");
         if (openQueue != null) openQueue.run();
     }

@@ -45,6 +45,20 @@ class DownloadManager {
         ensureWorker();
     }
 
+    /** True if this URL is already queued or downloading (not yet finished/failed). */
+    boolean isActive(String url) {
+        if (url == null) return false;
+        synchronized (tasks) {
+            for (DownloadTask t : tasks) {
+                if (url.equals(t.sourceUrl)
+                        && (t.state == DownloadTask.State.QUEUED || t.state == DownloadTask.State.DOWNLOADING)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /** Snapshot of all tasks (most recent first) for the UI to render. */
     List<DownloadTask> snapshot() {
         synchronized (tasks) {

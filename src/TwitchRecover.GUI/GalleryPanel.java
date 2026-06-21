@@ -22,6 +22,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -238,29 +239,77 @@ class GalleryPanel extends JPanel {
         }.execute();
     }
 
-    private void delete(LibraryEntry e) {
-        boolean hasFile = e.downloaded && e.filePath != null && new java.io.File(e.filePath).exists();
+    private void delete(final LibraryEntry e) {
+        final boolean hasFile = e.downloaded && e.filePath != null && new File(e.filePath).exists();
         String msg = I18n.t(hasFile ? "gal.deleteFile" : "gal.deleteEntry");
         int r = JOptionPane.showConfirmDialog(this, msg, I18n.t("btn.delete"),
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
         if (r != JOptionPane.OK_OPTION) return;
-        if (hasFile) {
-            try { new java.io.File(e.filePath).delete(); } catch (Exception ignored) {}
+
+        // No file on disk: just remove the gallery entry.
+        if (!hasFile) {
+            Library.get().remove(e.url);
+            refresh();
+            return;
         }
-        Library.get().remove(e.url);
-        refresh();
+
+        // Release the internal player first (on Windows it can keep the file locked),
+        // then delete on a background thread with retries so a brief lock doesn't leave
+        // the file behind. Only drop the gallery entry once the file is really gone.
+        if (nav != null) nav.stopPlayer();
+        status.setText(I18n.t("gal.deleting"));
+        final File file = new File(e.filePath);
+        new SwingWorker<Boolean, Void>() {
+            protected Boolean doInBackground() { return deleteFile(file); }
+            protected void done() {
+                boolean ok;
+                try { ok = get(); } catch (Exception ex) { ok = !file.exists(); }
+                status.setText(" ");
+                if (ok) {
+                    Library.get().remove(e.url);
+                    refresh();
+                } else {
+                    // Keep the entry so the user can close whatever holds the file and retry.
+                    JOptionPane.showMessageDialog(GalleryPanel.this, I18n.t("gal.deleteFail"),
+                            I18n.t("btn.delete"), JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
+    }
+
+    /** Delete a file, retrying briefly: a player (vlcj/JNA) may release the handle a moment late. */
+    private static boolean deleteFile(File f) {
+        if (f == null) return true;
+        for (int i = 0; i < 6; i++) {
+            if (!f.exists()) return true;
+            if (f.delete()) return true;
+            System.gc();   // nudge the JVM to release any lingering native file handle
+            try { Thread.sleep(150); } catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
+        }
+        return !f.exists();
     }
 
     private void loadThumb(final JLabel label, final String url) {
         if (url == null || url.isEmpty()) return;
         new SwingWorker<ImageIcon, Void>() {
             protected ImageIcon doInBackground() {
+                java.io.InputStream in = null;
                 try {
-                    BufferedImage img = ImageIO.read(new URL(url));
+                    // Use explicit timeouts so a slow thumbnail host can't hang this worker thread.
+                    java.net.HttpURLConnection con = (java.net.HttpURLConnection) new URL(url).openConnection();
+                    con.setConnectTimeout(8000);
+                    con.setReadTimeout(8000);
+                    con.setRequestProperty("User-Agent", "Mozilla/5.0");
+                    in = con.getInputStream();
+                    BufferedImage img = ImageIO.read(in);
                     if (img == null) return null;
                     Image scaled = img.getScaledInstance(CARD_W, THUMB_H, Image.SCALE_SMOOTH);
                     return new ImageIcon(scaled);
-                } catch (Exception ex) { return null; }
+                } catch (Exception ex) {
+                    return null;
+                } finally {
+                    if (in != null) try { in.close(); } catch (Exception ignored) {}
+                }
             }
             protected void done() {
                 try {

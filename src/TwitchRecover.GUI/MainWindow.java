@@ -144,6 +144,9 @@ public class MainWindow extends JFrame {
                 select("player");
                 playerPanel.open(title, labels, urls, startIndex);
             }
+            public void stopPlayer() {
+                if (playerPanel != null) playerPanel.stop();
+            }
         };
         content.add(new ViewPanel(nav), "view");
         content.add(downloadPanel, "download");

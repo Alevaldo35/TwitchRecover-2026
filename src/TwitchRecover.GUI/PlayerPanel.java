@@ -53,6 +53,9 @@ class PlayerPanel extends JPanel {
     private String currentUrl;
     private boolean seeking = false;
     private boolean updatingCombo = false;
+    private float pendingSeek = -1f;   // Resume position (0..1) to apply once the new media is ready.
+    private boolean lastPlaying = true; // Last known play state, to avoid needless icon repaints.
+    private boolean everPlayed = false; // Becomes true once playback actually started (avoids load-time flicker).
 
     PlayerPanel(Runnable onBack, Runnable onFullscreen) {
         this.onBack = onBack;
@@ -75,7 +78,11 @@ class PlayerPanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 if (updatingCombo) return;
                 int i = qualityCombo.getSelectedIndex();
-                if (urls != null && i >= 0 && i < urls.size()) play(urls.get(i));
+                if (urls != null && i >= 0 && i < urls.size()) {
+                    // Switching quality used to restart from 0; keep the current spot instead.
+                    float pos = (available && media != null) ? media.mediaPlayer().status().position() : -1f;
+                    play(urls.get(i), pos);
+                }
             }
         });
 
@@ -120,6 +127,17 @@ class PlayerPanel extends JPanel {
                 seeking = false;
             }
         });
+        // Click anywhere on the bar to jump there (not just drag the thumb).
+        seek.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent e) {
+                if (!available || media == null) return;
+                int w = seek.getWidth();
+                if (w <= 0) return;
+                float frac = Math.max(0f, Math.min(1f, e.getX() / (float) w));
+                seek.setValue((int) (frac * 1000));
+                media.mediaPlayer().controls().setPosition(frac);
+            }
+        });
         timeLabel.setForeground(Color.WHITE);
         timeLabel.setFont(Ui.font(12, Font.PLAIN));
         JPanel seekLine = new JPanel(new BorderLayout(12, 0));
@@ -140,6 +158,8 @@ class PlayerPanel extends JPanel {
                 if (available && media != null) {
                     media.mediaPlayer().audio().mute();
                     boolean m = media.mediaPlayer().audio().isMute();
+                    // Unmuting while the slider sits at 0 would stay silent: restore a sane level.
+                    if (!m && volume.getValue() == 0) volume.setValue(40);
                     muteBtn.setKind(m ? IconButton.Kind.MUTE : IconButton.Kind.VOLUME);
                 }
             }
@@ -147,7 +167,12 @@ class PlayerPanel extends JPanel {
         volume.setOpaque(false);
         volume.setPreferredSize(new Dimension(90, 22));
         volume.addChangeListener(e -> {
-            if (available && media != null) media.mediaPlayer().audio().setVolume(volume.getValue());
+            if (available && media != null) {
+                int v = volume.getValue();
+                media.mediaPlayer().audio().setVolume(v);
+                boolean muted = v == 0 || media.mediaPlayer().audio().isMute();
+                muteBtn.setKind(muted ? IconButton.Kind.MUTE : IconButton.Kind.VOLUME);
+            }
         });
         IconButton fs = new IconButton(IconButton.Kind.FULLSCREEN, 22);
         fs.setToolTipText(I18n.t("btn.fullscreen"));
@@ -264,8 +289,14 @@ class PlayerPanel extends JPanel {
         timer.start();
     }
 
-    private void play(String url) {
+    private void play(String url) { play(url, -1f); }
+
+    /** Play a URL, optionally resuming at a 0..1 position once the media is ready. */
+    private void play(String url, float resumeFraction) {
         currentUrl = url;
+        pendingSeek = resumeFraction;
+        lastPlaying = true;
+        everPlayed = false;
         playPause.setKind(IconButton.Kind.PAUSE);
         if (available && media != null) {
             media.mediaPlayer().media().play(url);
@@ -277,20 +308,35 @@ class PlayerPanel extends JPanel {
 
     private void togglePlay() {
         if (!available || media == null) return;
-        media.mediaPlayer().controls().pause();
-        boolean playing = media.mediaPlayer().status().isPlaying();
-        playPause.setKind(playing ? IconButton.Kind.PAUSE : IconButton.Kind.PLAY);
+        boolean wasPlaying = media.mediaPlayer().status().isPlaying();
+        media.mediaPlayer().controls().pause();   // toggles play/pause
+        lastPlaying = !wasPlaying;
+        playPause.setKind(lastPlaying ? IconButton.Kind.PAUSE : IconButton.Kind.PLAY);
     }
 
     private void tick() {
         if (!available || media == null) return;
-        if (!seeking) {
+        if (pendingSeek >= 0f) {
+            // Apply the resume position once the new media actually started.
+            if (media.mediaPlayer().status().isPlaying() && media.mediaPlayer().status().length() > 0) {
+                media.mediaPlayer().controls().setPosition(pendingSeek);
+                pendingSeek = -1f;
+            }
+        } else if (!seeking) {
             float pos = media.mediaPlayer().status().position();
             if (pos >= 0) seek.setValue((int) (pos * 1000));
         }
         long t = media.mediaPlayer().status().time();
         long len = media.mediaPlayer().status().length();
         timeLabel.setText(fmt(t) + " / " + fmt(len));
+        // Keep the play/pause icon in sync with the real state (end of video, buffering…),
+        // but only once playback has actually begun, to avoid an icon flicker while loading.
+        boolean playing = media.mediaPlayer().status().isPlaying();
+        if (playing) everPlayed = true;
+        if (everPlayed && playing != lastPlaying) {
+            lastPlaying = playing;
+            playPause.setKind(playing ? IconButton.Kind.PAUSE : IconButton.Kind.PLAY);
+        }
     }
 
     private static String fmt(long ms) {

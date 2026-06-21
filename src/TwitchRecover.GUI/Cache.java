@@ -22,8 +22,21 @@ import java.io.FilenameFilter;
 final class Cache {
     private Cache() {}
 
-    /** Delete every "TwitchRecover-*" item from the system temp folder. */
+    /**
+     * Delete leftover temporary download segments: everything inside the app's own
+     * scratch folder (Videos\TWITCH\.cache) plus any legacy "TwitchRecover-*" items
+     * still in the system temp folder. The final videos in Videos\TWITCH are untouched.
+     */
     static void purge() {
+        // The app's own scratch folder: safe to empty entirely (only holds temp segments).
+        try {
+            File cache = Paths.cacheDir();
+            File[] items = cache.listFiles();
+            if (items != null) {
+                for (File f : items) deleteRecursively(f);
+            }
+        } catch (Exception ignored) {}
+        // Legacy / fallback: anything we previously left in the system temp folder.
         try {
             File tmp = new File(System.getProperty("java.io.tmpdir"));
             File[] items = tmp.listFiles(new FilenameFilter() {

@@ -20,4 +20,7 @@ interface Nav {
 
     /** Open the internal player with selectable qualities. */
     void openPlayer(String title, List<String> labels, List<String> urls, int startIndex);
+
+    /** Stop the internal player and release any file it has open (needed before deleting a file). */
+    void stopPlayer();
 }

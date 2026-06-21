@@ -32,4 +32,14 @@ final class Paths {
     static File libraryFile() {
         return new File(twitchDir(), "library.json");
     }
+
+    /**
+     * Scratch folder for temporary download segments, kept INSIDE Videos\TWITCH so the
+     * app never writes large temporary files anywhere else. Emptied after each download.
+     */
+    static File cacheDir() {
+        File dir = new File(twitchDir(), ".cache");
+        if (!dir.exists()) dir.mkdirs();
+        return dir;
+    }
 }

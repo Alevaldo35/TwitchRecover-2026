@@ -54,6 +54,9 @@ final class I18n {
         p("gal.deleteFile", "Supprimer cette vidéo ?\n\nLe fichier sera définitivement supprimé du disque pour libérer de l'espace.",
                             "Delete this video?\n\nThe file will be permanently removed from disk to free up space.");
         p("gal.deleteEntry", "Retirer cette vidéo de la galerie ?", "Remove this video from the gallery?");
+        p("gal.deleting", "Suppression…", "Deleting…");
+        p("gal.deleteFail", "Impossible de supprimer le fichier : il est peut-être ouvert dans un lecteur.\nFermez la vidéo (et tout lecteur externe), puis réessayez.",
+                            "Could not delete the file: it may be open in a player.\nClose the video (and any external player), then try again.");
         p("st.playing", "Ouverture dans VLC…", "Opening in VLC…");
         p("st.noPlayer", "VLC introuvable. Installez VLC (videolan.org) ou utilisez « Copier le lien ».",
                          "VLC not found. Install VLC (videolan.org) or use “Copy link”.");
@@ -153,6 +156,9 @@ final class I18n {
         p("dl.needFolder", "Choisissez d'abord un dossier de destination.", "Choose a destination folder first.");
         p("dl.needLinks", "Collez au moins un lien.", "Paste at least one link.");
         p("dl.addedSuffix", " lien(s) ajouté(s) à la file d'attente.", " link(s) added to the queue.");
+        p("dl.skippedSuffix", " ({n} déjà en cours, ignoré(s)).", " ({n} already in progress, skipped).");
+        p("dl.allDup", "Ces liens sont déjà dans la file ou en cours de téléchargement.",
+                       "Those links are already queued or downloading.");
 
         // Downloads (queue) page
         p("q.subtitle", "Tous vos téléchargements. Ils se lancent automatiquement, un par un.",

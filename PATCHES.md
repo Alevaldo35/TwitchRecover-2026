@@ -54,6 +54,39 @@ File: `TwitchRecover.Core/API/API.java` — `parseToken()`, and
 - Callers now bail out gracefully (return empty feeds) on a `null` token or a
   missing/empty API response, instead of crashing with an unhandled exception.
 
+### 5. GUI fixes & polish (2026)
+
+**Player** (`TwitchRecover.GUI/PlayerPanel.java`)
+- Switching quality now **resumes at the current position** instead of restarting from 0.
+- The play/pause icon stays in sync with the real playback state (end of video,
+  buffering), without flickering while the media loads.
+- You can **click anywhere on the progress bar** to seek there (not only drag).
+- Volume / mute icon are kept consistent, and un-muting while the slider is at 0
+  restores a sensible volume.
+
+**Downloads** (`TwitchRecover.GUI/DownloadPanel.java`, `DownloadManager.java`)
+- Duplicate links (within a paste, or already downloading) are skipped instead of
+  being queued twice.
+
+**Gallery delete** (`TwitchRecover.GUI/GalleryPanel.java`, `Nav.java`, `MainWindow.java`)
+- Deleting a downloaded video now reliably removes it **from disk as well as the
+  gallery**: the internal player releases the file first, deletion retries briefly
+  (Windows can hold a native handle for a moment), and the gallery entry is only
+  dropped once the file is actually gone. If it still can't be deleted, the entry is
+  kept and the user is told why.
+- Gallery thumbnails load with connect/read timeouts so a slow host can't hang a thread.
+
+### 6. All temporary files kept inside Videos\TWITCH
+
+Files: `TwitchRecover.Core/Downloader/{FileHandler,Download}.java`,
+`TwitchRecover.GUI/{App,Cache,Paths}.java`
+
+- Temporary download segments used to be written to the **system temp folder**
+  (several GB while downloading). They are now stored in **`Videos\TWITCH\.cache`**,
+  so the app never writes large temporary files anywhere else, and the scratch folder
+  is emptied at startup and after every download (the system temp folder is still
+  swept for legacy leftovers).
+
 ## Verified
 
 - Project compiles cleanly with `javac --release 8` (JDK 22).

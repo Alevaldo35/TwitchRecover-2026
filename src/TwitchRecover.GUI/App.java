@@ -33,6 +33,10 @@ public class App {
             }
         }
 
+        // Keep ALL temporary download segments inside Videos\TWITCH\.cache so the app
+        // never writes large temp files anywhere else on the disk.
+        TwitchRecover.Core.Downloader.Download.setTempBaseDir(Paths.cacheDir());
+
         // Clean up any leftover temporary download segments so the app never
         // silently eats disk space (e.g. after a previous crash or force-quit).
         Cache.purge();

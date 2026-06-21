@@ -30,14 +30,23 @@ import java.util.NavigableMap;
  */
 class FileHandler {
     protected static Path TEMP_FOLDER_PATH;    //Variable which holds the folder path of the temp folder.
+    protected static Path BASE_TEMP_DIR;       //Optional base dir for temp segments (null = system temp folder).
 
     /**
      * This method creates a temp folder where all of the temporary TS
-     * files (M3U8 parts) will be saved.
+     * files (M3U8 parts) will be saved. If a base temp directory has been
+     * set (see {@link Download#setTempBaseDir(File)}), the folder is created
+     * there instead of the system temp directory.
      * @throws IOException
      */
     protected static void createTempFolder() throws IOException {
-        TEMP_FOLDER_PATH= Files.createTempDirectory("TwitchRecover-").toAbsolutePath();
+        if(BASE_TEMP_DIR!=null){
+            Files.createDirectories(BASE_TEMP_DIR);
+            TEMP_FOLDER_PATH= Files.createTempDirectory(BASE_TEMP_DIR, "TwitchRecover-").toAbsolutePath();
+        }
+        else{
+            TEMP_FOLDER_PATH= Files.createTempDirectory("TwitchRecover-").toAbsolutePath();
+        }
         File tempDir=new File(String.valueOf(TEMP_FOLDER_PATH));
         tempDir.deleteOnExit();
     }
